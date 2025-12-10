@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ghonse Media</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ==================== ОКНО ЛОГИНА ==================== -->
+<div id="loginContainer" class="auth-container active">
+  <div class="auth-box">
+    <div class="auth-header">
+      <h1>🎬 Ghonse Media</h1>
+      <p>Добро пожаловать</p>
+    </div>
+
+    <form id="loginForm" class="auth-form">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="your@email.com" required>
+      </div>
+
+      <div class="form-group">
+        <label>Пароль</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" required>
+      </div>
+
+      <button type="submit" class="btn-primary">Войти</button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Нет аккаунта? <a href="#" onclick="switchToRegister(event)">Зарегистрироваться</a></p>
+    </div>
+
+    <div id="loginError" class="error-message"></div>
+  </div>
+</div>
+
+<!-- ==================== ОКНО РЕГИСТРАЦИИ ==================== -->
+<div id="registerContainer" class="auth-container">
+  <div class="auth-box">
+    <div class="auth-header">
+      <h1>🎬 Ghonse Media</h1>
+      <p>Создать аккаунт</p>
+    </div>
+
+    <form id="registerForm" class="auth-form">
+      <div class="form-group">
+        <label>Имя</label>
+        <input type="text" id="firstName" placeholder="Иван" required>
+      </div>
+
+      <div class="form-group">
+        <label>Фамилия</label>
+        <input type="text" id="lastName" placeholder="Иванов" required>
+      </div>
+
+      <div class="form-group">
+        <label>Возраст</label>
+        <input type="number" id="age" placeholder="25" min="10" max="120" required>
+      </div>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="registerEmail" placeholder="your@email.com" required>
+      </div>
+
+      <div class="form-group">
+        <label>Логин</label>
+        <input type="text" id="username" placeholder="username" required>
+      </div>
+
+      <div class="form-group">
+        <label>Пароль</label>
+        <input type="password" id="registerPassword" placeholder="••••••••" required>
+      </div>
+
+      <div class="form-group">
+        <label>Повторите пароль</label>
+        <input type="password" id="confirmPassword" placeholder="••••••••" required>
+      </div>
+
+      <button type="submit" class="btn-primary">Зарегистрироваться</button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Уже есть аккаунт? <a href="#" onclick="switchToLogin(event)">Войти</a></p>
+    </div>
+
+    <div id="registerError" class="error-message"></div>
+  </div>
+</div>
+
+<!-- ==================== ГЛАВНОЕ ОКНО ПРИЛОЖЕНИЯ ==================== -->
+<div id="mainSection" style="display:none;">
+  
+  <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
+  <div id="appBar">
+    <div class="app-title">🎬 Ghonse Media</div>
+    <div class="app-buttons">
+      <button onclick="showSection('cinema')">🎬 Кино</button>
+      <button onclick="showSection('games')">🎮 Игры</button>
+      <button onclick="showSection('assistant')">🤖 Помощник</button>
+      <button onclick="showSection('profile')">👤 Профиль</button>
+      <button onclick="logout()" class="btn-logout">🚪 Выход</button>
+    </div>
+  </div>
+
+  <!-- РАЗДЕЛ: КИНО И СЕРИАЛЫ -->
+  <div id="cinema" class="section">
+    <div class="section-header">
+      <h2>🎬 Кино и сериалы</h2>
+      <p>Смотрите популярные фильмы</p>
+    </div>
+    <div id="moviesList" class="movies-container">Загрузка фильмов...</div>
+  </div>
+
+  <!-- РАЗДЕЛ: РАЗВЛЕЧЕНИЯ -->
+  <div id="games" class="section" style="display:none;">
+    <div class="section-header">
+      <h2>🎮 Развлечения</h2>
+      <p>Играйте и веселитесь</p>
+    </div>
+
+    <div class="game-section">
+      <h3>Крестики-нолики</h3>
+      <div id="board" class="game-board"></div>
+      <button onclick="startGame()" class="btn-secondary">Новая игра</button>
+    </div>
+
+    <div class="game-section">
+      <h3>Угадай слово</h3>
+      <div id="wordDisplay" class="word-display"></div>
+      <input type="text" id="wordGameInput" placeholder="Введите букву" maxlength="1">
+      <button onclick="guessLetter()" id="guessBtn" class="btn-secondary">Угадать</button>
+      <button onclick="startWordGame()" class="btn-secondary">Новая игра</button>
+    </div>
+
+    <div class="game-section">
+      <h3>Продолжи фразу</h3>
+      <div id="phraseText" class="phrase-text"></div>
+      <input type="text" id="phraseAnswer" placeholder="Напишите продолжение">
+      <button onclick="checkPhrase()" class="btn-secondary">Проверить</button>
+      <button onclick="startPhraseGame()" class="btn-secondary">Новая фраза</button>
+      <div id="phraseResult"></div>
+    </div>
+  </div>
+
+  <!-- РАЗДЕЛ: ИИ-ПОМОЩНИК -->
+  <div id="assistant" class="section" style="display:none;">
+    <div class="section-header">
+      <h2>🤖 ИИ-помощник</h2>
+      <p>Спросите меня о чём угодно</p>
+    </div>
+    
+    <div class="chat-container">
+      <div id="chatMessages" class="chat-messages"></div>
+      <div class="chat-input-group">
+        <input type="text" id="assistantInput" placeholder="Напишите вопрос...">
+        <button onclick="askAssistant()" class="btn-secondary">Отправить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- РАЗДЕЛ: ПРОФИЛЬ -->
+  <div id="profile" class="section" style="display:none;">
+    <div class="section-header">
+      <h2>👤 Мой профиль</h2>
+      <p>Управляйте своим аккаунтом</p>
+    </div>
+
+    <div class="profile-grid">
+      <div class="profile-info-card">
+        <h3>Информация профиля</h3>
+        <div id="profileInfo" class="profile-data"></div>
+      </div>
+
+      <div class="profile-edit-card">
+        <h3>Редактирование</h3>
+        <form id="profileForm" class="profile-form">
+          <div class="form-group">
+            <label>Имя</label>
+            <input type="text" id="editFirstName">
+          </div>
+
+          <div class="form-group">
+            <label>Фамилия</label>
+            <input type="text" id="editLastName">
+          </div>
+
+          <div class="form-group">
+            <label>Возраст</label>
+            <input type="number" id="editAge">
+          </div>
+
+          <div class="form-group">
+            <label>Логин</label>
+            <input type="text" id="editUsername">
+          </div>
+
+          <button type="submit" class="btn-primary">💾 Сохранить</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="profile-security">
+      <h3>Безопасность</h3>
+      <div class="security-actions">
+        <button onclick="openPasswordChange()" class="btn-secondary">Изменить пароль</button>
+        <button onclick="deleteAccount()" class="btn-danger">🗑️ Удалить аккаунт</button>
+      </div>
+
+      <div id="passwordChangeForm" style="display:none;" class="password-form">
+        <div class="form-group">
+          <label>Новый пароль</label>
+          <input type="password" id="newPassword" placeholder="••••••••">
+        </div>
+        <button onclick="updatePassword()" class="btn-primary">Изменить пароль</button>
+        <button onclick="closePasswordChange()" class="btn-secondary">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module" src="firebase.js"></script>
+<script type="module" src="main.js"></script>
+
+</body>
+</html>
