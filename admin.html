@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ панель</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <div id="admin-container">
+        <!-- Admin App Bar -->
+        <nav class="app-bar">
+            <div class="app-bar-content">
+                <div class="logo">
+                    <i class="fas fa-crown"></i>
+                    <span>Админ Панель</span>
+                </div>
+                <div class="nav-links">
+                    <a href="#" onclick="showAdminTab('users')" class="nav-link">
+                        <i class="fas fa-users"></i> Пользователи
+                    </a>
+                    <a href="#" onclick="showAdminTab('admins')" class="nav-link">
+                        <i class="fas fa-user-shield"></i> Администраторы
+                    </a>
+                    <a href="#" onclick="showAdminTab('online')" class="nav-link">
+                        <i class="fas fa-wifi"></i> Онлайн
+                    </a>
+                    <a href="#" onclick="goToMainApp()" class="nav-link">
+                        <i class="fas fa-arrow-left"></i> На главную
+                    </a>
+                </div>
+                <div class="user-menu">
+                    <span id="admin-greeting"></span>
+                    <button onclick="logoutAdmin()" class="btn-logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Контент админ-панели -->
+        <main class="admin-content">
+            <!-- Пользователи -->
+            <section id="users-tab" class="admin-section">
+                <h2><i class="fas fa-users"></i> Все пользователи</h2>
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Имя</th>
+                                <th>Фамилия</th>
+                                <th>Логин</th>
+                                <th>Email</th>
+                                <th>Возраст</th>
+                                <th>Роль</th>
+                                <th>Дата регистрации</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table">
+                            <!-- Данные загружаются через JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <!-- Администраторы -->
+            <section id="admins-tab" class="admin-section" style="display: none;">
+                <h2><i class="fas fa-user-shield"></i> Администраторы</h2>
+                <div class="admin-actions">
+                    <h3>Добавить нового администратора</h3>
+                    <div class="add-admin-form">
+                        <input type="text" id="admin-firstname" placeholder="Имя">
+                        <input type="text" id="admin-lastname" placeholder="Фамилия">
+                        <input type="number" id="admin-age" placeholder="Возраст">
+                        <input type="text" id="admin-username" placeholder="Логин">
+                        <input type="email" id="admin-email" placeholder="Email">
+                        <input type="password" id="admin-password" placeholder="Пароль">
+                        <button onclick="addNewAdmin()" class="btn-primary">Добавить админа</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Имя</th>
+                                <th>Фамилия</th>
+                                <th>Логин</th>
+                                <th>Email</th>
+                                <th>Возраст</th>
+                                <th>Добавлен</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admins-table">
+                            <!-- Данные загружаются через JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <!-- Онлайн пользователи -->
+            <section id="online-tab" class="admin-section" style="display: none;">
+                <h2><i class="fas fa-wifi"></i> Онлайн пользователи</h2>
+                <div class="online-stats">
+                    <div class="stat-card">
+                        <i class="fas fa-users"></i>
+                        <h3 id="online-count">0</h3>
+                        <p>Пользователей онлайн</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-user-shield"></i>
+                        <h3 id="admins-online">0</h3>
+                        <p>Админов онлайн</p>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Имя</th>
+                                <th>Логин</th>
+                                <th>Email</th>
+                                <th>Роль</th>
+                                <th>Время входа</th>
+                            </tr>
+                        </thead>
+                        <tbody id="online-table">
+                            <!-- Данные загружаются через JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script src="firebase.js"></script>
+    <script src="admin-panel.js"></script>
+</body>
+</html>
