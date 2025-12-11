@@ -1,0 +1,385 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мультиплатформенный портал</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <!-- Экран авторизации/регистрации -->
+    <div id="auth-screen" class="auth-container">
+        <div class="auth-form">
+            <h1>Добро пожаловать!</h1>
+            
+            <div class="auth-tabs">
+                <button class="tab-btn active" onclick="switchTab('login')">Вход</button>
+                <button class="tab-btn" onclick="switchTab('register')">Регистрация</button>
+            </div>
+            
+            <!-- Форма входа -->
+            <div id="login-form" class="form-container">
+                <input type="email" id="login-email" placeholder="Email" required>
+                <input type="password" id="login-password" placeholder="Пароль" required>
+                <button onclick="login()" class="btn-primary">Войти</button>
+            </div>
+            
+            <!-- Форма регистрации -->
+            <div id="register-form" class="form-container" style="display: none;">
+                <input type="text" id="reg-firstname" placeholder="Имя" required>
+                <input type="text" id="reg-lastname" placeholder="Фамилия" required>
+                <input type="number" id="reg-age" placeholder="Возраст" min="1" max="120" required>
+                <input type="text" id="reg-username" placeholder="Логин" required>
+                <input type="email" id="reg-email" placeholder="Email" required>
+                <input type="password" id="reg-password" placeholder="Пароль" required>
+                <input type="password" id="reg-confirm-password" placeholder="Подтвердите пароль" required>
+                <button onclick="register()" class="btn-primary">Зарегистрироваться</button>
+            </div>
+            
+            <div id="auth-message" class="message"></div>
+        </div>
+    </div>
+    
+    <!-- Основной интерфейс (скрыт до авторизации) -->
+    <div id="main-app" style="display: none;">
+        <!-- App Bar -->
+        <nav class="app-bar">
+            <div class="app-bar-content">
+                <div class="logo">
+                    <i class="fas fa-film"></i>
+                    <span>GHONSE MEDIA</span>
+                </div>
+                <div class="nav-links">
+                    <a href="#" onclick="showSection('movies')" class="nav-link">
+                        <i class="fas fa-film"></i> Кино
+                    </a>
+                    <a href="#" onclick="showSection('series')" class="nav-link">
+                        <i class="fas fa-tv"></i> Сериалы
+                    </a>
+                    <a href="#" onclick="showSection('games')" class="nav-link">
+                        <i class="fas fa-gamepad"></i> Развлечение
+                    </a>
+                    <a href="#" onclick="showSection('ai-assistant')" class="nav-link">
+                        <i class="fas fa-robot"></i> ИИ Ассистент
+                    </a>
+                    <a href="#" onclick="showSection('profile')" class="nav-link">
+                        <i class="fas fa-user"></i> Профиль
+                    </a>
+                    <a href="#" onclick="showAdminPanel()" id="admin-link" class="nav-link" style="display: none;">
+                        <i class="fas fa-crown"></i> Админ
+                    </a>
+                </div>
+                <div class="user-menu">
+                    <span id="user-greeting"></span>
+                    <button onclick="logout()" class="btn-logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Основной контент -->
+        <main class="main-content">
+            <!-- Кино -->
+            <section id="movies-section" class="content-section">
+                <h2><i class="fas fa-film"></i> Кино</h2>
+                <div class="movies-grid" id="movies-container">
+                    <!-- Фильмы будут загружаться здесь -->
+                </div>
+            </section>
+            
+            <!-- Сериалы -->
+            <section id="series-section" class="content-section" style="display: none;">
+                <h2><i class="fas fa-tv"></i> Сериалы</h2>
+                <div class="series-grid" id="series-container">
+                    <!-- Сериалы будут загружаться здесь -->
+                </div>
+            </section>
+            
+            <!-- Игры и развлечения -->
+            <section id="games-section" class="content-section" style="display: none;">
+                <h2><i class="fas fa-gamepad"></i> Развлечения и Игры</h2>
+                <div class="games-grid">
+                    <div class="game-card" onclick="startGame('battleship')">
+                        <i class="fas fa-ship"></i>
+                        <h3>Морской бой</h3>
+                        <p>Классическая игра для двух игроков</p>
+                    </div>
+                    <div class="game-card" onclick="startGame('wordguess')">
+                        <i class="fas fa-font"></i>
+                        <h3>Угадай слово</h3>
+                        <p>Отгадайте слово по подсказкам</p>
+                    </div>
+                    <div class="game-card" onclick="startGame('tictactoe')">
+                        <i class="fas fa-times"></i>
+                        <h3>Крестики-нолики</h3>
+                        <p>Игра для двух игроков</p>
+                    </div>
+                    <div class="game-card" onclick="startGame('phrase')">
+                        <i class="fas fa-quote-right"></i>
+                        <h3>Продолжи фразу</h3>
+                        <p>Продолжите известные фразы</p>
+                    </div>
+                    <div class="game-card" onclick="startGame('capital')">
+                        <i class="fas fa-globe-americas"></i>
+                        <h3>Найди столицу</h3>
+                        <p>Угадайте столицы стран</p>
+                    </div>
+                    <div class="game-card" onclick="startGame('math')">
+                        <i class="fas fa-calculator"></i>
+                        <h3>Математика</h3>
+                        <p>Решите математические задачи</p>
+                    </div>
+                </div>
+                <div id="game-container"></div>
+            </section>
+            
+            <!-- ИИ Ассистент -->
+            <section id="ai-assistant-section" class="content-section" style="display: none;">
+                <h2><i class="fas fa-robot"></i> ИИ Ассистент</h2>
+                <div class="ai-container">
+                    <div class="ai-chat">
+                        <div class="chat-messages" id="chat-messages">
+                            <div class="message ai-message">
+                                Привет! Я ваш ИИ ассистент. Чем могу помочь?
+                                Я могу посоветовать фильмы, помочь с навигацией по сайту,
+                                решить математические задачи или просто пообщаться!
+                            </div>
+                        </div>
+                        <div class="chat-input">
+                            <input type="text" id="ai-input" placeholder="Задайте вопрос...">
+                            <button onclick="sendAIMessage()">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="ai-suggestions">
+                        <h3>Быстрые действия:</h3>
+                        <button class="suggestion-btn" onclick="suggestMovies()">Посоветуй фильм</button>
+                        <button class="suggestion-btn" onclick="solveMath()">Решить математику</button>
+                        <button class="suggestion-btn" onclick="helpNavigation()">Помощь с навигацией</button>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Профиль -->
+            <section id="profile-section" class="content-section" style="display: none;">
+                <h2><i class="fas fa-user"></i> Мой Профиль</h2>
+                <div class="profile-container">
+                    <div class="profile-info">
+                        <div class="profile-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div class="profile-details">
+                            <h3 id="profile-name"></h3>
+                            <p><i class="fas fa-user-tag"></i> Логин: <span id="profile-username"></span></p>
+                            <p><i class="fas fa-envelope"></i> Email: <span id="profile-email"></span></p>
+                            <p><i class="fas fa-birthday-cake"></i> Возраст: <span id="profile-age"></span></p>
+                            <p><i class="fas fa-user-shield"></i> Роль: <span id="profile-role"></span></p>
+                        </div>
+                    </div>
+                    <div class="profile-actions">
+                        <button onclick="logout()" class="btn-danger">
+                            <i class="fas fa-sign-out-alt"></i> Выйти из аккаунта
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script src="firebase.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
+
+<!-- В nav-links добавьте: -->
+<a href="#" onclick="showAdminPanel()" id="admin-link" class="nav-link" style="display: none;">
+    <i class="fas fa-crown"></i> Админ
+</a>
+
+<!-- Добавьте ПЕРЕД закрывающим тегом </body> -->
+
+<!-- Кнопка "Наверх" -->
+<div class="back-to-top" id="back-to-top" onclick="scrollToTop()">
+    <i class="fas fa-arrow-up"></i>
+</div>
+
+<!-- Футер сайта -->
+<footer class="site-footer" id="site-footer">
+    <div class="footer-content">
+        <!-- Информация о создателе -->
+        <div class="footer-section">
+            <h3><i class="fas fa-user-tie"></i> О создателе</h3>
+            <p><strong>Зиёвуддин Юнусов</strong></p>
+            <p>Full-stack разработчик и веб-дизайнер</p>
+            <p>Специализация: React, Node.js, Firebase</p>
+            <p>Опыт: 2+ года в веб-разработке</p>
+        </div>
+        
+        <!-- Контактная информация -->
+        <div class="footer-section">
+            <h3><i class="fas fa-address-book"></i> Контакты</h3>
+            <div class="contact-info">
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>Email: <a href="mailto:ziyoyunusov27@gmail.com">ziyoyunusov27@gmail.com</a></span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <span>Телефон: <a href="tel:+998901234567">+998 (xx) xxx-xx-xx</a></span>
+                </div>
+                <div class="contact-item">
+                    <i class="fab fa-telegram"></i>
+                    <span>Telegram: <a href="https://t.me/A_Ghonse" target="_blank">@A_Ghonse</a></span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Ташкент, Узбекистан</span>
+                </div>
+            </div>
+            
+            <div class="social-links">
+                <a href="https://t.me/A_Ghonse" class="social-link" target="_blank" title="Telegram">
+                    <i class="fab fa-telegram"></i>
+                </a>
+                <a href="mailto:ziyoyunusov27@gmail.com" class="social-link" title="Email">
+                    <i class="fas fa-envelope"></i>
+                </a>
+                <a href="https://github.com/ZiyoYunusov" class="social-link" target="_blank" title="GitHub">
+                    <i class="fab fa-github"></i>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Технологии -->
+        <div class="footer-section">
+            <h3><i class="fas fa-code"></i> Технологии</h3>
+            <p>Сайт создан с использованием современных технологий:</p>
+            <div class="tech-stack">
+                <span class="tech-item">HTML5</span>
+                <span class="tech-item">CSS3</span>
+                <span class="tech-item">JavaScript</span>
+                <span class="tech-item">Firebase</span>
+                <span class="tech-item">TMDB API</span>
+                <span class="tech-item">Font Awesome</span>
+            </div>
+        </div>
+        
+        <!-- Информация о сайте -->
+        <div class="footer-section">
+            <h3><i class="fas fa-info-circle"></i> О сайте</h3>
+            <p><strong>МультиПортал</strong> - это многофункциональная платформа для развлечений и обучения.</p>
+            <p>Возможности:</p>
+            <p>• Фильмы и сериалы (TMDB API)</p>
+            <p>• Игры для двоих игроков</p>
+            <p>• ИИ ассистент для помощи</p>
+            <p>• Безопасная авторизация</p>
+        </div>
+    </div>
+    
+    <div class="footer-bottom">
+        <p>&copy; 2024 <strong>МультиПортал</strong>. Все права защищены.</p>
+        <p>Сайт создан <strong>Зиёвуддином Юнусовым</strong> | Версия 1.0.0</p>
+        <p><a href="#" onclick="showPrivacyPolicy()">Политика конфиденциальности</a> | 
+           <a href="#" onclick="showTermsOfService()">Условия использования</a></p>
+    </div>
+</footer>
+
+<script>
+    // Показ/скрытие кнопки "Наверх"
+    window.addEventListener('scroll', function() {
+        const backToTopBtn = document.getElementById('back-to-top');
+        if (window.scrollY > 300) {
+            backToTopBtn.classList.add('show');
+        } else {
+            backToTopBtn.classList.remove('show');
+        }
+    });
+    
+    // Прокрутка наверх
+    function scrollToTop() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+    
+    // Политика конфиденциальности
+    function showPrivacyPolicy() {
+        alert(`ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ
+
+1. Сбор информации
+Мы собираем только необходимую информацию для работы сайта:
+- Email для регистрации
+- Имя, фамилия и возраст
+- Данные для входа в систему
+
+2. Использование информации
+Информация используется для:
+- Авторизации пользователей
+- Персонализации опыта
+- Улучшения работы сайта
+
+3. Защита данных
+Мы используем Firebase для безопасного хранения данных.
+Все пароли шифруются.
+
+4. Контакты
+По вопросам конфиденциальности: ziyoyunusov27@gmail.com`);
+    }
+    
+    // Условия использования
+    function showTermsOfService() {
+        alert(`УСЛОВИЯ ИСПОЛЬЗОВАНИЯ
+
+1. Общие положения
+Используя этот сайт, вы соглашаетесь с условиями.
+
+2. Регистрация
+При регистрации вы подтверждаете, что:
+- Вам есть 13 лет
+- Вы предоставляете достоверные данные
+- Не будете использовать сайт для незаконных целей
+
+3. Права и обязанности
+Вы имеете право:
+- Создать аккаунт
+- Использовать все функции сайта
+- Удалить свой аккаунт
+
+Вы обязаны:
+- Не нарушать работу сайта
+- Не распространять вредоносный контент
+- Соблюдать авторские права
+
+4. Контакты
+Владелец: Зиёвуддин Юнусов
+Email: ziyoyunusov27@gmail.com
+Telegram: @A_Ghonse`);
+    }
+</script>
+
+<!-- Добавьте вместо отдельных кнопок: -->
+<div class="dropdown">
+    <a href="#" class="nav-link dropdown-toggle">
+        <i class="fas fa-info-circle"></i> Информация
+    </a>
+    <div class="dropdown-menu">
+        <a href="#" onclick="showSiteInfo()" class="dropdown-item">
+            <i class="fas fa-globe"></i> О сайте
+        </a>
+        <a href="#" onclick="showContactInfo()" class="dropdown-item">
+            <i class="fas fa-phone"></i> Контакты
+        </a>
+        <a href="#" onclick="showSupport()" class="dropdown-item">
+            <i class="fas fa-headset"></i> Поддержка
+        </a>
+    </div>
+</div>

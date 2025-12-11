@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Исправление авторизации</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            line-height: 1.6;
+        }
+        .step {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        code {
+            background: #333;
+            color: #fff;
+            padding: 10px;
+            display: block;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔥 ИСПРАВЛЕНИЕ АВТОРИЗАЦИИ</h1>
+    
+    <div class="step">
+        <h2>Шаг 1: Очистите данные браузера</h2>
+        <p>Нажмите F12 → Application → Storage → Clear All</p>
+        <button onclick="clearAllData()">Очистить все данные</button>
+    </div>
+    
+    <div class="step">
+        <h2>Шаг 2: Проверьте конфигурацию Firebase</h2>
+        <p>Зайдите в <a href="https://console.firebase.google.com" target="_blank">Firebase Console</a> и убедитесь:</p>
+        <ol>
+            <li>Проект создан</li>
+            <li>Authentication включен (Email/Password)</li>
+            <li>Firestore Database создана</li>
+        </ol>
+    </div>
+    
+    <div class="step">
+        <h2>Шаг 3: Правильная конфигурация firebase.js</h2>
+        <p>Замените firebase.js на этот код:</p>
+        <code>
+// firebase.js - ИСПРАВЛЕННАЯ ВЕРСИЯ
+const firebaseConfig = {
+    apiKey: "AIzaSyBKCcDda45gUbsr-iNdMPQq_Bz7XE5evTQ",
+    authDomain: "ghonse-media-site.firebaseapp.com",
+    projectId: "ghonse-media-site",
+    storageBucket: "ghonse-media-site.firebasestorage.app",
+    messagingSenderId: "334804323154",
+    appId: "1:334804323154:web:5f0784093e1630c798888b"
+};
+
+// Автоматическая инициализация
+let auth, db;
+
+// Проверяем, инициализирован ли Firebase
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+
+auth = firebase.auth();
+db = firebase.firestore();
+
+// Устанавливаем сохранение сессии
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+    .then(() => {
+        console.log("✅ Firebase настроен, сессия сохраняется");
+    })
+    .catch((error) => {
+        console.error("❌ Ошибка настройки Firebase:", error);
+    });
+
+// Класс для работы с аутентификацией
+window.FirebaseAuthService = {
+    
+    // Вход в систему
+    async loginUser(email, password) {
+        try {
+            console.log("🔐 Попытка входа:", email);
+            
+            if (!email || !password) {
+                return { success: false, error: "Заполните все поля" };
+            }
+            
+            if (!this.isValidEmail(email)) {
+                return { success: false, error: "Введите правильный email" };
+            }
+            
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+            
+            console.log("✅ Успешный вход:", user.uid);
+            
+            // Сохраняем данные пользователя
+            localStorage.setItem('currentUser', JSON.stringify({
+                uid: user.uid,
+                email: user.email
+            }));
+            
+            return { success: true, user: user };
+            
+        } catch (error) {
+            console.error("❌ Ошибка входа:", error.code, error.message);
+            
+            let errorMessage = "Ошибка входа";
+            switch(error.code) {
+                case 'auth/user-not-found':
+                    errorMessage = "Пользователь не найден";
+                    break;
+                case 'auth/wrong-password':
+                    errorMessage = "Неверный пароль";
+                    break;
+                case 'auth/invalid-email':
+                    errorMessage = "Неправильный email";
+                    break;
+                case 'auth/too-many-requests':
+                    errorMessage = "Слишком много попыток. Попробуйте позже";
+                    break;
+                default:
+                    errorMessage = error.message;
+            }
+            
+            return { success: false, error: errorMessage };
+        }
+    },
+    
+    // Регистрация
+    async registerUser(userData) {
+        try {
+            console.log("📝 Регистрация:", userData.email);
+            
+            // Проверка данных
+            if (!userData.email || !this.isValidEmail(userData.email)) {
+                return { success: false, error: "Введите правильный email" };
+            }
+            
+            if (!userData.password || userData.password.length < 6) {
+                return { success: false, error: "Пароль должен быть минимум 6 символов" };
+            }
+            
+            if (userData.password !== userData.confirmPassword) {
+                return { success: false, error: "Пароли не совпадают" };
+            }
+            
+            // Регистрация в Firebase Auth
+            const userCredential = await auth.createUserWithEmailAndPassword(
+                userData.email, 
+                userData.password
+            );
+            
+            const user = userCredential.user;
+            
+            // Сохраняем данные в Firestore
+            await db.collection('users').doc(user.uid).set({
+                uid: user.uid,
+                email: userData.email,
+                firstName: userData.firstName || '',
+                lastName: userData.lastName || '',
+                age: parseInt(userData.age) || 0,
+                username: userData.username || '',
+                role: 'user',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                isOnline: true
+            });
+            
+            console.log("✅ Пользователь зарегистрирован:", user.uid);
+            
+            // Сохраняем в localStorage
+            localStorage.setItem('currentUser', JSON.stringify({
+                uid: user.uid,
+                email: user.email
+            }));
+            
+            return { success: true, user: user };
+            
+        } catch (error) {
+            console.error("❌ Ошибка регистрации:", error.code, error.message);
+            
+            let errorMessage = "Ошибка регистрации";
+            switch(error.code) {
+                case 'auth/email-already-in-use':
+                    errorMessage = "Этот email уже используется";
+                    break;
+                case 'auth/invalid-email':
+                    errorMessage = "Неправильный email";
+                    break;
+                case 'auth/weak-password':
+                    errorMessage = "Пароль слишком простой";
+                    break;
+                default:
+                    errorMessage = error.message;
+            }
+            
+            return { success: false, error: errorMessage };
+        }
+    },
+    
+    // Выход
+    async logout() {
+        try {
+            const user = auth.currentUser;
+            if (user) {
+                // Обновляем статус в Firestore
+                await db.collection('users').doc(user.uid).update({
+                    isOnline: false,
+                    lastLogout: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+            
+            await auth.signOut();
+            localStorage.removeItem('currentUser');
+            console.log("✅ Выход выполнен");
+            
+            return { success: true };
+            
+        } catch (error) {
+            console.error("❌ Ошибка выхода:", error);
+            return { success: false, error: error.message };
+        }
+    },
+    
+    // Получить текущего пользователя
+    getCurrentUser() {
+        return auth.currentUser;
+    },
+    
+    // Проверка email
+    isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    },
+    
+    // Получить данные пользователя
+    async getUserData(uid) {
+        try {
+            const doc = await db.collection('users').doc(uid).get();
+            if (doc.exists) {
+                return { success: true, data: doc.data() };
+            }
+            return { success: false, error: "Пользователь не найден" };
+        } catch (error) {
+            console.error("❌ Ошибка получения данных:", error);
+            return { success: false, error: error.message };
+        }
+    },
+    
+    // Проверить админа
+    async isUserAdmin(uid) {
+        try {
+            const doc = await db.collection('users').doc(uid).get();
+            if (doc.exists) {
+                const data = doc.data();
+                return data.role === 'admin' || data.email === 'ziyoyunusov27@gmail.com';
+            }
+            return false;
+        } catch (error) {
+            console.error("❌ Ошибка проверки админа:", error);
+            return false;
+        }
+    },
+    
+    // Слушатель изменения состояния
+    onAuthStateChanged(callback) {
+        return auth.onAuthStateChanged(callback);
+    }
+};
+        </code>
+    </div>
+    
+    <div class="step">
+        <h2>Шаг 4: Простой тест авторизации</h2>
+        <p>Создайте файл `test-auth.html` для проверки:</p>
+        <code>
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Тест авторизации&lt;/title&gt;
+    &lt;script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"&gt;&lt;/script&gt;
+    &lt;script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"&gt;&lt;/script&gt;
+    &lt;script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"&gt;&lt;/script&gt;
+    &lt;script src="firebase.js"&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h2&gt;Тест авторизации&lt;/h2&gt;
+    &lt;div&gt;
+        &lt;input type="email" id="test-email" placeholder="test@test.com"&gt;
+        &lt;input type="password" id="test-password" placeholder="password123"&gt;
+        &lt;button onclick="testLogin()"&gt;Войти&lt;/button&gt;
+        &lt;button onclick="testLogout()"&gt;Выйти&lt;/button&gt;
+    &lt;/div&gt;
+    &lt;div id="test-result"&gt;&lt;/div&gt;
+    
+    &lt;script&gt;
+    function testLogin() {
+        const email = document.getElementById('test-email').value;
+        const password = document.getElementById('test-password').value;
+        
+        FirebaseAuthService.loginUser(email, password)
+            .then(result => {
+                document.getElementById('test-result').innerHTML = 
+                    result.success ? 
+                    '✅ Успешно! Пользователь: ' + result.user.email : 
+                    '❌ Ошибка: ' + result.error;
+            });
+    }
+    
+    function testLogout() {
+        FirebaseAuthService.logout()
+            .then(result => {
+                document.getElementById('test-result').innerHTML = 
+                    result.success ? '✅ Вышел из системы' : '❌ Ошибка: ' + result.error;
+            });
+    }
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+        </code>
+    </div>
+    
+    <script>
+        function clearAllData() {
+            localStorage.clear();
+            sessionStorage.clear();
+            alert("Данные очищены! Обновите страницу.");
+        }
+    </script>
+</body>
+</html>

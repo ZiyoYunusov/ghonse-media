@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ панель</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDK ДОЛЖНЫ БЫТЬ ПЕРВЫМИ -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <!-- 🔥 ДОБАВЬТЕ ЭТОТ СПИННЕР ПЕРЕД КОНТЕНТОМ -->
+    <div id="loading-screen" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        color: white;
+        font-size: 18px;
+    ">
+        <div style="text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 20px;">
+                <i class="fas fa-cog fa-spin"></i>
+            </div>
+            <div>Загрузка админ-панели...</div>
+            <div style="font-size: 14px; margin-top: 10px; color: rgba(255,255,255,0.8);">
+                Проверка авторизации
+            </div>
+        </div>
+    </div>
+    
+    <div id="admin-container" style="display: none;">
+        <!-- Остальной код админ-панели остается -->
+        <!-- Admin App Bar -->
+        <nav class="app-bar">
+            <!-- ... остальной код ... -->
+        </nav>
+        <!-- ... остальной код ... -->
+    </div>
+    
+    <!-- 🔥 ПОДКЛЮЧАЕМ СКРИПТЫ В ПРАВИЛЬНОМ ПОРЯДКЕ -->
+    <script src="firebase.js"></script>
+    <script>
+        // 🔥 СКРЫВАЕМ ЗАГРУЗКУ ПОСЛЕ ИНИЦИАЛИЗАЦИИ
+        setTimeout(() => {
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                loadingScreen.style.display = 'none';
+            }
+            const adminContainer = document.getElementById('admin-container');
+            if (adminContainer) {
+                adminContainer.style.display = 'block';
+            }
+        }, 1000);
+    </script>
+    <script src="admin-panel.js"></script>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ панель</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <div id="admin-container">
+        <!-- Admin App Bar -->
+        <nav class="app-bar">
+            <div class="app-bar-content">
+                <div class="logo">
+                    <i class="fas fa-crown"></i>
+                    <span>Админ Панель</span>
+                </div>
+                <div class="nav-links">
+                    <a href="#" onclick="showAdminTab('users')" class="nav-link">
+                        <i class="fas fa-users"></i> Пользователи
+                    </a>
+                    <a href="#" onclick="showAdminTab('admins')" class="nav-link">
+                        <i class="fas fa-user-shield"></i> Администраторы
+                    </a>
+                    <a href="#" onclick="showAdminTab('online')" class="nav-link">
+                        <i class="fas fa-wifi"></i> Онлайн
+                    </a>
+                    <a href="#" onclick="goToMainApp()" class="nav-link">
+                        <i class="fas fa-arrow-left"></i> На главную
+                    </a>
+                </div>
+                <div class="user-menu">
+                    <span id="admin-greeting"></span>
+                    <button onclick="logoutAdmin()" class="btn-logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Контент админ-панели -->
+        <main class="admin-content">
+            <!-- Пользователи -->
+            <section id="users-tab" class="admin-section">
+                <h2><i class="fas fa-users"></i> Все пользователи</h2>
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Имя</th>
+                                <th>Фамилия</th>
+                                <th>Логин</th>
+                                <th>Email</th>
+                                <th>Возраст</th>
+                                <th>Роль</th>
+                                <th>Дата регистрации</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table">
+                            <!-- Данные загружаются через JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <!-- Администраторы -->
+            <section id="admins-tab" class="admin-section" style="display: none;">
+                <h2><i class="fas fa-user-shield"></i> Администраторы</h2>
+                <div class="admin-actions">
+                    <h3>Добавить нового администратора</h3>
+                    <div class="add-admin-form">
+                        <input type="text" id="admin-firstname" placeholder="Имя">
+                        <input type="text" id="admin-lastname" placeholder="Фамилия">
+                        <input type="number" id="admin-age" placeholder="Возраст">
+                        <input type="text" id="admin-username" placeholder="Логин">
+                        <input type="email" id="admin-email" placeholder="Email">
+                        <input type="password" id="admin-password" placeholder="Пароль">
+                        <button onclick="addNewAdmin()" class="btn-primary">Добавить админа</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Имя</th>
+                                <th>Фамилия</th>
+                                <th>Логин</th>
+                                <th>Email</th>
+                                <th>Возраст</th>
+                                <th>Добавлен</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admins-table">
+                            <!-- Данные загружаются через JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <!-- Онлайн пользователи -->
+            <section id="online-tab" class="admin-section" style="display: none;">
+                <h2><i class="fas fa-wifi"></i> Онлайн пользователи</h2>
+                <div class="online-stats">
+                    <div class="stat-card">
+                        <i class="fas fa-users"></i>
+                        <h3 id="online-count">0</h3>
+                        <p>Пользователей онлайн</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-user-shield"></i>
+                        <h3 id="admins-online">0</h3>
+                        <p>Админов онлайн</p>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Имя</th>
+                                <th>Логин</th>
+                                <th>Email</th>
+                                <th>Роль</th>
+                                <th>Время входа</th>
+                            </tr>
+                        </thead>
+                        <tbody id="online-table">
+                            <!-- Данные загружаются через JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script src="firebase.js"></script>
+    <script src="admin-panel.js"></script>
+</body>
+</html>
+
+<!-- В админ-панель добавьте такой же футер -->
+<footer class="site-footer">
+    <div class="footer-content">
+        <div class="footer-section">
+            <h3><i class="fas fa-shield-alt"></i> Админ-панель</h3>
+            <p><strong>Только для администраторов</strong></p>
+            <p>Доступ ограничен</p>
+            <p>Версия: 1.0.0</p>
+        </div>
+        <div class="footer-section">
+            <h3><i class="fas fa-user-shield"></i> Администратор</h3>
+            <div class="contact-info">
+                <div class="contact-item">
+                    <i class="fas fa-user"></i>
+                    <span>Зиёвуддин Юнусов</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>ziyoyunusov27@gmail.com</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fab fa-telegram"></i>
+                    <span>@ziyovuddin</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2024 Админ-панель МультиПортала. Все права защищены.</p>
+        <p>Доступ разрешен только авторизованным администраторам</p>
+    </div>
+</footer>
